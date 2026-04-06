@@ -1,4 +1,4 @@
-import { resizeAspectRatio, setupText, updateText, Axes } from '../util/util.js';
+import { resizeAspectRatio, Axes } from '../util/util.js';
 import { Shader, readShaderFile } from '../util/shader.js';
 
 let isInitialized = false;
@@ -8,7 +8,6 @@ const gl = canvas.getContext('webgl2');
 let shader;
 let vaoRect;
 let axes;
-let textOverlay;
 let startTime = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -45,7 +44,6 @@ function initWebGL() {
 }
 
 function setupBuffers() {
-    // 중심이 원점인 기본 직사각형
     const rectVertices = new Float32Array([
         -0.5,  0.5,
         -0.5, -0.5,
@@ -58,8 +56,6 @@ function setupBuffers() {
         0, 2, 3
     ]);
 
-    // 색은 uniform으로 줄 것이므로 아무 값이나 넣어도 되지만
-    // 기존 구조 유지 위해 color attribute도 남겨둠
     const rectColors = new Float32Array([
         1.0, 1.0, 1.0, 1.0,
         1.0, 1.0, 1.0, 1.0,
@@ -98,29 +94,11 @@ function drawRect(transform, color) {
 function render(elapsedTime) {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    axes.draw(mat4.create(), mat4.create());
-
     const centerX = 0.0;
     const centerY = 0.2;
 
     const bigAngle = Math.sin(elapsedTime) * Math.PI * 2.0;
     const smallAngle = Math.sin(elapsedTime) * Math.PI * -10.0;
-
-    // 기둥
-    {
-        const pillar = mat4.create();
-        mat4.translate(pillar, pillar, [0.0, -0.35, 0.0]);
-        mat4.scale(pillar, pillar, [0.12, 0.9, 1.0]);
-        drawRect(pillar, [0.55, 0.32, 0.12, 1.0]);
-    }
-
-    // 허브
-    {
-        const hub = mat4.create();
-        mat4.translate(hub, hub, [centerX, centerY, 0.0]);
-        mat4.scale(hub, hub, [0.10, 0.10, 1.0]);
-        drawRect(hub, [0.15, 0.15, 0.15, 1.0]);
-    }
 
     const bigBladeLength = 0.72;
     const bigBladeThickness = 0.08;
@@ -129,7 +107,15 @@ function render(elapsedTime) {
     const smallBladeLength = 0.24;
     const smallBladeThickness = 0.06;
 
-    // 큰 날개
+    // pillar
+    {
+        const pillar = mat4.create();
+        mat4.translate(pillar, pillar, [0.0, -0.30, 0.0]);
+        mat4.scale(pillar, pillar, [0.12, 1.0, 1.0]);
+        drawRect(pillar, [0.4, 0.2, 0.05, 1.0]);
+    }
+
+    // Main Wing
     {
         const bigBlade = mat4.create();
         mat4.translate(bigBlade, bigBlade, [centerX, centerY, 0.0]);
@@ -138,7 +124,7 @@ function render(elapsedTime) {
         drawRect(bigBlade, [0.92, 0.92, 0.92, 1.0]);
     }
 
-    // 큰 날개 양 끝점
+    // Main wing endpoint
     const dx = Math.cos(bigAngle) * halfBigBlade;
     const dy = Math.sin(bigAngle) * halfBigBlade;
 
@@ -147,28 +133,24 @@ function render(elapsedTime) {
     const leftEndX = centerX - dx;
     const leftEndY = centerY - dy;
 
-    // 오른쪽 작은 날개
+    // subwing - right
     {
         const smallBlade1 = mat4.create();
         mat4.translate(smallBlade1, smallBlade1, [rightEndX, rightEndY, 0.0]);
         mat4.rotate(smallBlade1, smallBlade1, smallAngle + Math.PI / 2, [0, 0, 1]);
         mat4.scale(smallBlade1, smallBlade1, [smallBladeLength, smallBladeThickness, 1.0]);
-        drawRect(smallBlade1, [0.75, 0.85, 1.0, 1.0]);
+        drawRect(smallBlade1, [0.6, 0.6, 0.6, 1.0]);
     }
 
-    // 왼쪽 작은 날개
+    // subwing - left
     {
         const smallBlade2 = mat4.create();
         mat4.translate(smallBlade2, smallBlade2, [leftEndX, leftEndY, 0.0]);
         mat4.rotate(smallBlade2, smallBlade2, smallAngle + Math.PI / 2, [0, 0, 1]);
         mat4.scale(smallBlade2, smallBlade2, [smallBladeLength, smallBladeThickness, 1.0]);
-        drawRect(smallBlade2, [0.75, 0.85, 1.0, 1.0]);
-    }
+        drawRect(smallBlade2, [0.6, 0.6, 0.6, 1.0]);
+    };
 
-    updateText(
-        textOverlay,
-        `elapsedTime: ${elapsedTime.toFixed(2)}s | big: ${bigAngle.toFixed(2)} | small: ${smallAngle.toFixed(2)}`
-    );
 }
 
 function animate(currentTime) {
@@ -197,8 +179,7 @@ async function main() {
 
         axes = new Axes(gl, 0.8);
 
-        textOverlay = setupText(canvas, 'Windmill Animation', 1);
-        setupText(canvas, 'Big: sin(t) * pi * 2.0, Small: sin(t) * pi * -10.0', 2);
+
 
         return true;
     } catch (error) {
