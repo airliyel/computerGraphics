@@ -31,6 +31,7 @@ let modelMatrix = mat4.create();
 let lampModelMatrix = mat4.create();
 let arcBallMode = 'CAMERA';     // 'CAMERA' or 'MODEL'
 let shadingMode = 'SMOOTH';       // 'FLAT' or 'SMOOTH'
+let shadingMethod = 'GOAROUND';     // 'GOAROUDN' or 'PHONG'
 
 const cylinder = new Cylinder(gl, 32);
 const cone = new Cone(gl, 32);
@@ -91,6 +92,18 @@ function setupKeyboardEvents() {
             shadingMode = 'FLAT';
             updateText(textOverlay3, "shading mode: " + shadingMode);
             render();
+        }
+        else if (event.key == 'g') {
+            cone.copyFaceNormalsToNormals();
+            cone.updateNormals();
+            shadingMethod = ' (GOAROUND)';
+            updateText(textOverlay3, "shading mode: " + shadingMode + shadingMethod);
+        }
+        else if (event.key == 'p') {
+        cone.copyFaceNormalsToNormals();
+        cone.updateNormals();
+        shadingMethod = ' (PHONG)';
+        updateText(textOverlay3, "shading mode: " + shadingMode + shadingMethod);
         }
     });
 }
@@ -199,11 +212,13 @@ async function main() {
 
         setupText(canvas, "Smooth Shading", 1);
         textOverlay2 = setupText(canvas, "arcball mode: " + arcBallMode, 2);
-        textOverlay3 = setupText(canvas, "shading mode: " + shadingMode, 3);
+        textOverlay3 = setupText(canvas, "shading mode: " + shadingMode + " ("+ shadingMethod + ")", 3);
         setupText(canvas, "press 'a' to change arcball mode", 4);
         setupText(canvas, "press 'r' to reset arcball", 5);
         setupText(canvas, "press 's' to switch to smooth shading", 6);
         setupText(canvas, "press 'f' to switch to flat shading", 7);
+        setupText(canvas, "press 'g' to switch to Goaround shading", 8);
+        setupText(canvas, "press 'p' to switch to Phong shading", 9);
         setupKeyboardEvents();
 
         // call the render function the first time for animation
