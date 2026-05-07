@@ -15,11 +15,12 @@ import { Shader, readShaderFile } from '../util/shader.js';
 import { Cube } from '../util/cube.js';
 import { Cone } from '../hw08/cone.js';
 import { Arcball } from '../util/arcball.js';
-import { Cylinder } from '../util/cylinder.js';
 
 const canvas = document.getElementById('glCanvas');
 const gl = canvas.getContext('webgl2');
 let shader;
+let phongShader;
+let gouraudShader;
 let lampShader;
 let textOverlay2;
 let textOverlay3;
@@ -31,9 +32,8 @@ let modelMatrix = mat4.create();
 let lampModelMatrix = mat4.create();
 let arcBallMode = 'CAMERA';     // 'CAMERA' or 'MODEL'
 let shadingMode = 'SMOOTH';       // 'FLAT' or 'SMOOTH'
-let shadingMethod = 'GOAROUND';     // 'GOAROUDN' or 'PHONG'
+let shadingMethod = ' (GOURAUD)';     // 'GOURAUD' or 'PHONG'
 
-const cylinder = new Cylinder(gl, 32);
 const cone = new Cone(gl, 32);
 const lamp = new Cube(gl);
 
@@ -83,25 +83,23 @@ function setupKeyboardEvents() {
             cone.copyVertexNormalsToNormals();
             cone.updateNormals();
             shadingMode = 'SMOOTH';
-            updateText(textOverlay3, "shading mode: " + shadingMode);
+            updateText(textOverlay3, "shading mode: " + shadingMode + shadingMethod);
             render();
         }
         else if (event.key == 'f') {
             cone.copyFaceNormalsToNormals();
             cone.updateNormals();
             shadingMode = 'FLAT';
-            updateText(textOverlay3, "shading mode: " + shadingMode);
+            updateText(textOverlay3, "shading mode: " + shadingMode + shadingMethod);
             render();
         }
         else if (event.key == 'g') {
-            cone.copyFaceNormalsToNormals();
-            cone.updateNormals();
-            shadingMethod = ' (GOAROUND)';
+
+            shadingMethod = ' (GOURAUD)';
             updateText(textOverlay3, "shading mode: " + shadingMode + shadingMethod);
         }
         else if (event.key == 'p') {
-        cone.copyFaceNormalsToNormals();
-        cone.updateNormals();
+
         shadingMethod = ' (PHONG)';
         updateText(textOverlay3, "shading mode: " + shadingMode + shadingMethod);
         }
@@ -126,6 +124,13 @@ function initWebGL() {
 async function initShader() {
     const vertexShaderSource = await readShaderFile('shVert.glsl');
     const fragmentShaderSource = await readShaderFile('shFrag.glsl');
+    const phongVert = await readShaderFile('phongVert.glsl');
+    const phongFrag = await readShaderFile('phongFrag.glsl');
+    phongShader = new Shader(gl, phongVert, phongFrag);
+    const gouraudVert = await readShaderFile('gouraudVert.glsl');
+    const gouraudFrag = await readShaderFile('gouraudFrag.glsl');
+    gouraudShader = new Shader(gl, gouraudVert, gouraudFrag);
+
     shader = new Shader(gl, vertexShaderSource, fragmentShaderSource);
 }
 
@@ -148,12 +153,26 @@ function render() {
         viewMatrix = arcball.getViewCamDistanceMatrix();
     }
 
-    // drawing the cylinder
-    shader.use();  // using the cylinder's shader
-    shader.setMat4('u_model', modelMatrix);
-    shader.setMat4('u_view', viewMatrix);
-    shader.setVec3('u_viewPos', cameraPos);
-    cone.draw(shader);
+    // drawing the cone
+    if (shadingMethod == ' (PHONG)') {
+        phongShader.use();
+        phongShader.setMat4('model', modelMatrix);
+        phongShader.setMat4('view', viewMatrix);
+        phongShader.setMat4('projection', projMatrix);
+        phongShader.setVec3('lightPos', lightPos);
+        phongShader.setVec3('viewPos', cameraPos);
+        cone.draw(phongShader);
+    }
+    else {
+        gouraudShader.use();
+        gouraudShader.setMat4('model', modelMatrix);
+        gouraudShader.setMat4('view', viewMatrix);
+        gouraudShader.setMat4('projection', projMatrix);
+        gouraudShader.setVec3('lightPos', lightPos);
+        gouraudShader.setVec3('viewPos', cameraPos);
+        cone.draw(gouraudShader);
+    }
+
 
     // drawing the lamp
     lampShader.use();
@@ -191,33 +210,20 @@ async function main() {
         await initShader();
         await initLampShader();
 
-        shader.use();
-        shader.setMat4("u_projection", projMatrix);
-
-        shader.setVec3("material.diffuse", vec3.fromValues(1.0, 0.5, 0.31));
-        shader.setVec3("material.specular", vec3.fromValues(0.5, 0.5, 0.5));
-        shader.setFloat("material.shininess", 16);
-
-        shader.setVec3("light.position", lightPos);
-        shader.setVec3("light.ambient", vec3.fromValues(0.2, 0.2, 0.2));
-        shader.setVec3("light.diffuse", vec3.fromValues(0.7, 0.7, 0.7));
-        shader.setVec3("light.specular", vec3.fromValues(1.0, 1.0, 1.0));
-        shader.setVec3("u_viewPos", cameraPos);
-
         lampShader.use();
         lampShader.setMat4("u_projection", projMatrix);
         mat4.translate(lampModelMatrix, lampModelMatrix, lightPos);
         mat4.scale(lampModelMatrix, lampModelMatrix, lightSize);
         lampShader.setMat4('u_model', lampModelMatrix);
 
-        setupText(canvas, "Smooth Shading", 1);
+        setupText(canvas, "Cone with Lighting", 1);
         textOverlay2 = setupText(canvas, "arcball mode: " + arcBallMode, 2);
-        textOverlay3 = setupText(canvas, "shading mode: " + shadingMode + " ("+ shadingMethod + ")", 3);
+        textOverlay3 = setupText(canvas, "shading mode: " + shadingMode + shadingMethod, 3);
         setupText(canvas, "press 'a' to change arcball mode", 4);
         setupText(canvas, "press 'r' to reset arcball", 5);
         setupText(canvas, "press 's' to switch to smooth shading", 6);
         setupText(canvas, "press 'f' to switch to flat shading", 7);
-        setupText(canvas, "press 'g' to switch to Goaround shading", 8);
+        setupText(canvas, "press 'g' to switch to Gouraud shading", 8);
         setupText(canvas, "press 'p' to switch to Phong shading", 9);
         setupKeyboardEvents();
 
