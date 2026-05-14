@@ -20,8 +20,8 @@ import { loadTexture } from '../util/texture.js';
 const canvas = document.getElementById('glCanvas');
 const gl = canvas.getContext('webgl2');
 let shader;
-let textOverlay2;
 let textOverlay1;
+let textOverlay2;
 let isInitialized = false;
 
 let viewMatrix = mat4.create();

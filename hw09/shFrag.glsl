@@ -27,14 +27,14 @@ uniform vec3 u_viewPos;
 uniform int u_toonLevels;
 
 float quantize(float value, int levels) {
-    if (levels <= 1) return 0.5;
+    if (levels <= 1) return 0.0;
     return floor(value * float(levels)) / float(levels - 1);
 }
 
 
 void main() {
     // ambient
-    vec3 rgb = texture(material.diffuse, texCoord).rgb;
+    vec3 rgb = vec3(201, 92, 50) / 255.0;
     vec3 ambient = light.ambient * rgb;
   	
     // diffuse 
@@ -57,7 +57,7 @@ void main() {
 
     spec = clamp(spec, 0.0, 1.0);
     spec = quantize(spec, u_toonLevels);
-    
+
     vec3 specular = light.specular * spec * material.specular;  
         
     vec3 result = ambient + diffuse + specular;
