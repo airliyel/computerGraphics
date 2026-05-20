@@ -40,6 +40,7 @@ const lightDirection = vec3.fromValues(1.0, 0.25, 0.5);
 const shininess = 32.0;
 
 
+
 // Arcball object: initial distance 5.0, rotation sensitivity 2.0, zoom sensitivity 0.0005
 // default of rotation sensitivity = 1.5, default of zoom sensitivity = 0.001
 const arcball = new Arcball(canvas, 5.0, { rotation: 2.0, zoom: 0.0005 });
