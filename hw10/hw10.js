@@ -147,7 +147,7 @@ const cameraProps = {
   mode: cameraMode,
   switchCamera: () => switchCamera()
 };
-cameraFolder.add(cameraProps, 'switchCamera').name('Toggle Perspective / Orthographic');
+cameraFolder.add(cameraProps, 'switchCamera').name('Switch Camera Type');
 cameraFolder.add(cameraProps, 'mode').name('Current Camera').listen();
 cameraFolder.open();
 
