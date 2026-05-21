@@ -118,7 +118,10 @@ function createOrbitLine(distance) {
   const points = curve.getPoints(160);
   const geometry = new THREE.BufferGeometry().setFromPoints(points.map((p) => new THREE.Vector3(p.x, 0, p.y)));
   const material = new THREE.LineBasicMaterial({ color: 0x333333 });
-  return new THREE.LineLoop(geometry, material);
+  const orbitLine = new THREE.LineLoop(geometry, material);
+  orbitLine.visible = false;
+
+  return orbitLine;
 }
 
 for (const info of planetInfos) {
