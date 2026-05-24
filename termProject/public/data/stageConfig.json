@@ -1,0 +1,29 @@
+[
+    {
+        "id": 0,
+        "name": "stage name",
+        "locked": false,
+        "threestartime": 60,
+        "highscore": 0,
+        "assetsPath" : "",
+        "targetShadowImage" : ""
+    },
+    {
+        "id": 1,
+        "name": "stage name",
+        "locked": true,
+        "threestartime": 90,
+        "highscore": 0,
+        "assetsPath" : "",
+        "targetShadowImage" : ""
+    },
+    {
+        "id": 2,
+        "name": "stage name",
+        "locked": true,
+        "threestartime": 120,
+        "highscore": 0,
+        "assetsPath" : "",
+        "targetShadowImage" : ""
+    }
+]

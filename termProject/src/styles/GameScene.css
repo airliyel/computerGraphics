@@ -1,0 +1,226 @@
+/* src/styles/gameScene.css
+   GameScene 전용 스타일.
+   기존 style.css의 전역 규칙(html/body, #gameCanvas, button 공통)은 그대로 유지하고
+   이 파일은 #game-hud 안의 요소만 담당한다.
+   index.html에서 style.css 다음에 로드할 것.
+*/
+
+/* ─── 레이아웃 리셋: game-hud는 flex가 아니라 absolute 레이어로 ── */
+#game-hud {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-rows: 64px 1fr;   /* 상단 헤더 / 본문 */
+    grid-template-columns: 1fr;
+    background: #f0f0f0;            /* 디자인 기준 밝은 회색 배경 */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #111;
+}
+
+/* ─── 상단 헤더 ────────────────────────────────────────────────── */
+#game-header {
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+    background: #e4e4e4;
+    border-bottom: 1px solid #d0d0d0;
+}
+
+#btn-back {
+    /* style.css의 전역 button을 덮어씀 */
+    margin: 0;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 20px;
+    color: #111;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+#btn-back:hover { background: rgba(0,0,0,0.08); }
+
+#header-title {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+#header-level {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+#header-stage-name {
+    font-size: 13px;
+    color: #555;
+    font-weight: 400;
+}
+
+/* ─── 본문 (캔버스 영역 + 사이드패널) ─────────────────────────── */
+#game-body {
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 320px;  /* 캔버스 / 우측 패널 */
+    overflow: hidden;
+}
+
+/* WebGL canvas는 style.css에서 position:fixed 처리됨.
+   game-viewport는 시각적으로 캔버스가 들어갈 자리를 잡아주는 영역. */
+#game-viewport {
+    position: relative;
+    /* 배경 투명 — 아래 #gameCanvas(z-index:0)가 비침 */
+    background: transparent;
+}
+
+/* ─── 우측 사이드 패널 ─────────────────────────────────────────── */
+#game-panel {
+    background: #e8e8e8;
+    border-left: 1px solid #d0d0d0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 16px;
+    overflow-y: auto;
+    z-index: 11;  /* 캔버스(0)보다 위, game-hud(10)보다 위 */
+}
+
+/* Target Shadow 카드 */
+#panel-target-card {
+    background: #dcdcdc;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#panel-target-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+}
+
+#panel-target-preview {
+    width: 100%;
+    aspect-ratio: 1 / 0.75;
+    background: #cfcfcf;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    /* TODO: 목표 그림자 이미지를 background-image로 교체
+       ex) background-image: url('/public/stages/stage1/target.png');
+           background-size: contain;
+           background-repeat: no-repeat;
+           background-position: center; */
+}
+
+/* 목표 그림자 플레이스홀더 도형 */
+#panel-target-preview .shadow-placeholder {
+    width: 60%;
+    height: 45%;
+    background: #1a1a1a;
+    border-radius: 4px;
+    transform: perspective(200px) rotateX(30deg) rotateZ(-8deg);
+    opacity: 0.85;
+    filter: blur(2px);
+}
+
+/* Match 카드 */
+#panel-match-card {
+    background: #dcdcdc;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#panel-match-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111;
+}
+
+#panel-match-bar-track {
+    width: 100%;
+    height: 8px;
+    background: #c4c4c4;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+#panel-match-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #3a3a3a;
+    border-radius: 99px;
+    transition: width 0.25s ease, background 0.25s ease;
+}
+
+/* match rate에 따라 JS에서 data-level 속성을 바꿔 색상 변경 */
+#panel-match-bar-fill[data-level="low"]    { background: #3a3a3a; }
+#panel-match-bar-fill[data-level="mid"]    { background: #d4870a; }
+#panel-match-bar-fill[data-level="high"]   { background: #1a7a3c; }
+
+/* 타이머 + 힌트 버튼 행 */
+#panel-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+#hud-timer,
+#btn-hint {
+    /* style.css 전역 button 덮어씀 */
+    margin: 0;
+    padding: 0;
+    height: 52px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+}
+
+#hud-timer {
+    background: #dcdcdc;
+    border: none;
+    color: #111;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+#btn-hint {
+    background: #dcdcdc;
+    border: none;
+    color: #111;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+}
+#btn-hint:hover { background: #cecece; }
+#btn-hint:active { background: #c0c0c0; }
+
+/* ─── Three.js 전용 캔버스 ────────────────────────────────────── */
+/* GameScene.enter()에서 동적으로 생성되는 Three.js renderer 캔버스 */
+#three-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;   /* #gameCanvas(0)보다 위, #game-hud(10)보다 아래 */
+    pointer-events: auto;
+}
