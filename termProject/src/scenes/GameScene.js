@@ -4,6 +4,8 @@ import SceneManager from '../core/SceneManager.js';
 import ClearScene from './ClearScene.js';
 import Arcball from '../game/arcball.js';
 import StageManager from '../core/StageManager.js';
+import '../styles/GameScene.css';
+import { mat4, vec3 } from 'gl-matrix';
 
 export default class GameScene extends BaseScene {
 
@@ -38,15 +40,6 @@ export default class GameScene extends BaseScene {
         this.stageName = stage ? stage.name : `Stage ${this.stageId + 1}`;
         this.assetsPath = stage ? stage.assetsPath : null;
         this.targetShadowImage = stage ? stage.targetShadow : null;
-
-        // CSS 로드 (중복 삽입 방지)
-        if (!document.getElementById('game-scene-css')) {
-            const link = document.createElement('link');
-            link.id   = 'game-scene-css';
-            link.rel  = 'stylesheet';
-            link.href = './src/styles/gameScene.css';
-            document.head.appendChild(link);
-        }
 
         this.gl.enable(this.gl.DEPTH_TEST);
         this.gl.depthFunc(this.gl.LEQUAL);

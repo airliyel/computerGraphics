@@ -1,6 +1,8 @@
 // Object Controller system
 // using arcball system to control the object
 
+import { quat, mat4, vec3 } from 'gl-matrix';
+
 export default class Arcball {
     constructor(canvas, distance = 5.0, sensitivity = {
         rotation: 1.0,

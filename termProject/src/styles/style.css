@@ -20,7 +20,6 @@ html, body {
 /* 모든 씬 UI div가 canvas 위에 올라오도록 */
 #main-menu,
 #stage-select,
-#game-hud,
 #clear-scene {
     position: fixed;
     top: 0;
@@ -35,6 +34,8 @@ html, body {
     color: white;
     font-family: sans-serif;
 }
+
+/* #game-hud 레이아웃은 GameScene.css에서 단독 관리 */
 
 button {
     margin: 8px;
