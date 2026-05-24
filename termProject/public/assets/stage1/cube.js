@@ -63,6 +63,7 @@ class Cube
                             2: color attrib (vec4), and 3: texture coordinate attrib (vec2))
 8) Fragment shader: should catch the vertex color from the vertex shader
 -----------------------------------------------------------------------------*/
+import { mat4, vec3 } from 'gl-matrix';
 
 export class Cube {
     constructor(gl, options = {}) {
