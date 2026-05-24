@@ -1,6 +1,6 @@
 async function loadStageConfig() {
     try {
-        const response = await fetch('./data/stageConfig.json');
+        const response = await fetch(`${import.meta.env.BASE_URL}data/stageConfig.json`);
         const stageData = await response.json();
         return stageData;
     } catch (error) {
