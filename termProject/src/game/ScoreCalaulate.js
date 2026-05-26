@@ -19,13 +19,22 @@ const ScoreCalculate = {
         }
         this.threestarTime = stage.threestartime ?? 60;
     },
-    
-    calculate(time, hintCount) {
-        // 플레이 타임과 힌트 사용 여부에 따라 점수가 결정됩니다
-        // stageConfig에서 각 스테이지의 threeStarTime을 참조하여 별점 기준을 설정할 수 있습니다
-        // hint 사용 시 기본적으로 별 1개 감점하도록 구현하되, 필요에 따라 감점 방식을 조정할 수 있습니다
-        // 반환 값은 1~3 사이의 별점으로, 3이 가장 높은 점수입니다.
-        return 1;
+
+    // 소요 시간과 힌트 사용 개수를 이용해 별점 계산
+    // public/data/stageConfig.json에서 threeStarTime 설정
+    calculate(time, hintCount, leniency = 0) {
+        // threestarTime 60초인 경우,
+        // 첫 번째 힌트 사용 시 60초 추가, 두 번째 45초, 세 번째 33.75초
+        const hintPenaltyDecay = 0.75;
+        const hintPenalty = this.threeStarTime / (1 - hintPenaltyDecay)
+            * (1 - (hintPenaltyDecay ** hintCount));
+        time += hintPenalty;
+
+        // leniency: 별 2개 조건만을 완화합니다. 기본값은 0
+        const twoStarTime = this.threeStarTime * 2 * (1 + leniency);
+
+        // 별 개수 (최소 1, 최대 3)
+        return 1 + (time < this.threeStarTime) + (time < twoStarTime);
     }
 };
 
