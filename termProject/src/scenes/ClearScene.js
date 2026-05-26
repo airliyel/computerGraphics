@@ -3,6 +3,7 @@ import BaseScene from './BaseScene.js';
 import SceneManager from '../core/SceneManager.js';
 import ScoreCalculate from '../game/ScoreCalculate.js';
 import StageManager from '../core/StageManager.js';
+import StorageManager from '../core/StorageManager.js';
 
 export default class ClearScene extends BaseScene {
     /**
@@ -15,8 +16,9 @@ export default class ClearScene extends BaseScene {
         this.stars  = 0;           // 별점 1~3
     }
 
-    enter() {
-        this.stars = this._calcStars();
+    async enter() {
+        this.stars = await this._calcStars();
+        StorageManager.saveResult(this.result.stageId, {score: this.result.time, stars: this.stars});
         this._buildUI();
     }
 
@@ -33,18 +35,26 @@ export default class ClearScene extends BaseScene {
 
     // ─── 별점 계산 ────────────────────────────────────────────
 
-    _calcStars() {
-        // TODO: ScoreCalculate.js로 위임 예정
-        return ScoreCalculate.calculate(this.result.time, this.result.hintCount);
+    async _calcStars() {
+        const s = new ScoreCalculate(this.result.stageId);
+        await s.init();
+        return await s.calculate(this.result.time, this.result.hintCount);
     }
 
     // ─── UI ───────────────────────────────────────────────────
 
-    _buildUI() {
-        const { time, stageId } = this.result;
+    _padTime(time) {
         const m = String(Math.floor(time / 60)).padStart(2, '0');
         const s = String(Math.floor(time % 60)).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    _buildUI() {
+        const { time, stageId } = this.result;
+
+        const clearTime = this._padTime(time);
         const starStr = '★'.repeat(this.stars) + '☆'.repeat(3 - this.stars);
+        const highscoreTime = this._padTime(StorageManager.getResult(stageId).bestScore);
 
         this._ui = document.createElement('div');
         this._ui.id = 'clear-scene';
@@ -52,8 +62,8 @@ export default class ClearScene extends BaseScene {
             <h2>Stage Clear!</h2>
             <p>Stage: ${stageId + 1}</p>
             <div id="clear-stars">${starStr}</div>
-            <p>highscore: ${m}:${s}</p> <!-- todo: 스테이지별 최고 기록 표시 -->
-            <p>Time: ${m}:${s}</p>
+            <p>highscore: ${highscoreTime}</p>
+            <p>Time: ${clearTime}</p>
             <button id="btn-next">Next Stage</button>
             <button id="btn-retry">Retry</button>
             <button id="btn-menu">Menu</button>
