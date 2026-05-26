@@ -6,6 +6,7 @@ import BaseScene from './BaseScene.js';
 import SceneManager from '../core/SceneManager.js';
 import GameScene from './GameScene.js';
 import StageManager from '../core/StageManager.js';
+import StorageManager from '../core/StorageManager.js';
 
 export default class StageSelectScene extends BaseScene {
     constructor(gl) {
@@ -91,7 +92,8 @@ export default class StageSelectScene extends BaseScene {
             btn.addEventListener('click', () => {
                 const index = Number(btn.dataset.index);
 
-                this._startStage(index);
+                if (StorageManager.isUnlocked(index))
+                    this._startStage(index);
             });
         });
 
