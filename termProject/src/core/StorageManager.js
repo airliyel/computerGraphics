@@ -1,31 +1,23 @@
-// storage Manager.js
-// save stage clear results to localStorage and retrieve them for display in StageSelectScene
+// 호출 흐름:
+//   ClearScene.enter()
+//     └─ StorageManager.saveResult(stageId, { score, stars })
+//     └─ StorageManager.unlockNext(stageId)
+//
+//   StageSelectScene._buildUI()
+//     └─ StorageManager.isUnlocked(stageId)  ← 버튼 잠금 표시
+//     └─ StorageManager.getResult(stageId)   ← 별점 표시
+//
+// localStorage 저장 구조 (참고):
+// {
+//   "stages": {
+//     "1": { cleared: true, bestScore: 920, bestStars: 3 },
+//     "2": { cleared: false, bestScore: 0,  bestStars: 0 }
+//   }
+// }
+//
+// _load, _save는 내부 전용이므로 다른 곳에서 직접 호출하지 마세요.
 
-// ┌─────────────────────────────────────────────────────────────────┐
-// │                                                        │
-// │                                                                 │
-// │  이 파일은 스테이지 클리어 기록을 localStorage에 저장하고       │
-// │  꺼내는 역할을 합니다.                                          │
-// │                                                                 │
-// │  호출 흐름:                                                     │
-// │    ClearScene.enter()                                           │
-// │      └─ StorageManager.saveResult(stageId, { score, stars })   │
-// │      └─ StorageManager.unlockNext(stageId)                     │
-// │                                                                 │
-// │    StageSelectScene._buildUI()                                  │
-// │      └─ StorageManager.isUnlocked(stageId)  ← 버튼 잠금 표시  │
-// │      └─ StorageManager.getResult(stageId)   ← 별점 표시        │
-// │                                                                 │
-// │  localStorage 저장 구조 (참고):                                  │
-// │  {                                                              │
-// │    "stages": {                                                  │
-// │      "1": { cleared: true, bestScore: 920, bestStars: 3 },     │
-// │      "2": { cleared: false, bestScore: 0,  bestStars: 0 }      │
-// │    }                                                            │
-// │  }                                                              │
-// └─────────────────────────────────────────────────────────────────┘
-
-// 저장 키는 'shadowMatch_save'로 고정합니다. 필요 시 변경 가능합니다.
+// localStorage에 클리어 기록을 저장하는 키
 const STORAGE_KEY = 'shadowMatch_save';
 
 // 기록이 없을 때 스테이지 기록을 초기화할 기본값

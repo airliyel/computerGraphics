@@ -1,8 +1,3 @@
-// Score Calculation system
-// calculate score based on time taken to clear the stage and number of hints used
-// 1. time score : based on time taken to clear the stage, the faster the better
-// 2. [optimal] hint score : once hint is used, score is reduced by a certain percentage of the total score
-
 import StorageManager from '../core/StorageManager.js';
 
 const ScoreCalculate = {
