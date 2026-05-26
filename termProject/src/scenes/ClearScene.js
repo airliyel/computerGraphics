@@ -1,7 +1,7 @@
 // src/scenes/ClearScene.js
 import BaseScene from './BaseScene.js';
 import SceneManager from '../core/SceneManager.js';
-import ScoreCalculate from '../game/ScoreCalaulate.js';
+import ScoreCalculate from '../game/ScoreCalculate.js';
 import StageManager from '../core/StageManager.js';
 
 export default class ClearScene extends BaseScene {

@@ -21,7 +21,7 @@
 const STORAGE_KEY = 'shadowMatch_save';
 
 // 기록이 없을 때 스테이지 기록을 초기화할 기본값
-const NEW_SAVE = { cleared: false, bestScore: 0, bestStars: 0 };
+const NEW_SAVE = { cleared: false, bestScore: 99 * 60 + 59, bestStars: 0 };
 
 const StorageManager = {
 
@@ -46,26 +46,28 @@ const StorageManager = {
     saveResult(stageId, { score, stars }) {
         // ClearScene에서 클리어 직후 호출합니다.
         // 기존 기록이 있으면 score, stars 갱신하고, 없으면 생성합니다.
-        let stageData = _load().stages;
-        if (!(stageId in stageData)) {
-            stageData[stageId] = { cleared: true, bestScore: score, bestStars: stars };
-            return;
+        let data = this._load();
+        if (!(stageId in data.stages)) {
+            data.stages[stageId] = { cleared: true, bestScore: score, bestStars: stars };
+        } else {
+            // TODO: bestScore는 최소 시간입니다. bestTime으로 바꾸기
+            data.stages[stageId].bestScore = Math.min(data.stages[stageId].bestScore, score);
+            data.stages[stageId].bestStars = Math.max(data.stages[stageId].bestStars, stars);
         }
-        stageData[stageId].bestScore = Math.max(stageData[stageId].bestScore, score);
-        stageData[stageId].bestStars = Math.max(stageData[stageId].bestStars, stars);
+        this._save(data);
     },
 
     getResult(stageId) {
         // 특정 스테이지의 저장 기록을 반환합니다. 
         // StageSelectScene에서 별점 표시할 때 씁니다. 
         // 기록이 없으면 { cleared: false, bestScore: 0, bestStars: 0 } 반환합니다.
-        return _load().stages[stageId] ?? NEW_SAVE;
+        return this._load().stages[stageId] ?? NEW_SAVE;
     },
 
     unlockNext(stageId) {
         // ClearScene에서 saveResult() 직후에 호출합니다.
         // stageId + 1번 스테이지 항목이 없을 경우에만 새 기록을 생성합니다.
-        let stageData = _load().stages;
+        let stageData = this._load().stages;
         if (!(stageId + 1 in stageData)) {
             stageData[stageId + 1] = NEW_SAVE;
         }
@@ -74,7 +76,7 @@ const StorageManager = {
     isUnlocked(stageId) {
         // StageSelectScene에서 버튼 활성화 여부를 결정할 때 씁니다.(스테이지 잠금 처리)
         // 첫 스테이지이거나, 이전 스테이지가 클리어되었을 때 true
-        return stageId === 1 || getResult(stageId - 1).cleared;
+        return stageId === 0 || this.getResult(stageId - 1).cleared;
     },
 
     reset() {
