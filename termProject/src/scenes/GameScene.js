@@ -5,7 +5,91 @@ import ClearScene from './ClearScene.js';
 import Arcball from '../game/arcball.js';
 import StageManager from '../core/StageManager.js';
 import '../styles/GameScene.css';
-import { mat4, vec3 } from 'gl-matrix';
+import { mat3, mat4, vec3 } from 'gl-matrix';
+
+import shVertSource from '../shaders/shVert.glsl?raw';
+import shFragSource from '../shaders/shFrag.glsl?raw';
+import shLampVertSource from '../shaders/shLampVert.glsl?raw';
+import shLampFragSource from '../shaders/shLampFrag.glsl?raw';
+import shadowVertSource from '../shaders/shadowVert.glsl?raw';
+import shadowFragSource from '../shaders/shadowFrag.glsl?raw';
+
+class SimpleShader {
+    constructor(gl, vertexSource, fragmentSource) {
+        this.gl = gl;
+        this.program = this._createProgram(vertexSource, fragmentSource);
+    }
+
+    use() {
+        this.gl.useProgram(this.program);
+    }
+
+    setInt(name, value) {
+        this.gl.uniform1i(this.gl.getUniformLocation(this.program, name), value);
+    }
+
+    setFloat(name, value) {
+        this.gl.uniform1f(this.gl.getUniformLocation(this.program, name), value);
+    }
+
+    setVec3(name, value) {
+        this.gl.uniform3fv(this.gl.getUniformLocation(this.program, name), value);
+    }
+
+    setVec4(name, value) {
+        this.gl.uniform4fv(this.gl.getUniformLocation(this.program, name), value);
+    }
+
+    setMat3(name, value) {
+        this.gl.uniformMatrix3fv(this.gl.getUniformLocation(this.program, name), false, value);
+    }
+
+    setMat4(name, value) {
+        this.gl.uniformMatrix4fv(this.gl.getUniformLocation(this.program, name), false, value);
+    }
+
+    delete() {
+        this.gl.deleteProgram(this.program);
+    }
+
+    _createProgram(vertexSource, fragmentSource) {
+        const gl = this.gl;
+        const vertexShader = this._compileShader(gl.VERTEX_SHADER, vertexSource);
+        const fragmentShader = this._compileShader(gl.FRAGMENT_SHADER, fragmentSource);
+        const program = gl.createProgram();
+
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            const log = gl.getProgramInfoLog(program);
+            gl.deleteProgram(program);
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            throw new Error(`Shader program link failed: ${log}`);
+        }
+
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        return program;
+    }
+
+    _compileShader(type, source) {
+        const gl = this.gl;
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            const log = gl.getShaderInfoLog(shader);
+            gl.deleteShader(shader);
+            throw new Error(`Shader compile failed: ${log}`);
+        }
+
+        return shader;
+    }
+}
 
 export default class GameScene extends BaseScene {
 
@@ -19,11 +103,14 @@ export default class GameScene extends BaseScene {
         this.matchRate = 0;      // 그림자 일치율 0~1
 
         this._onKeyDown = this._onKeyDown.bind(this);
-        this.arcball = new Arcball(this.gl.canvas);
+        this.arcball = new Arcball(this.gl.canvas, 5.0, { rotation: 1.2, zoom: 0.0 });
+
+        this.floorY = -1.1;
+        this.lightPosition = vec3.fromValues(2.8, 4.2, 2.4);
+        this.viewPosition = vec3.fromValues(0.0, 2.4, 6.5);
     }
 
     async enter() {
-        
         const stage = StageManager.getById(this.selectedStageId);
 
         if (!stage) {
@@ -41,18 +128,17 @@ export default class GameScene extends BaseScene {
         this.assetsPath = stage ? stage.assetsPath : null;
         this.targetShadowImage = stage ? stage.targetShadow : null;
 
-        this.gl.enable(this.gl.DEPTH_TEST);
-        this.gl.depthFunc(this.gl.LEQUAL);
+        this._initGLState();
+        await this._initSceneResources();
 
         this._buildUI();
         window.addEventListener('keydown', this._onKeyDown);
-
-        // TODO: 스테이지 데이터 로드, 셰이더 초기화, 오브젝트 배치
     }
 
     exit() {
         window.removeEventListener('keydown', this._onKeyDown);
         this._removeUI();
+        this._deleteSceneResources();
     }
 
     update(deltaTime) {
@@ -67,13 +153,217 @@ export default class GameScene extends BaseScene {
 
     render() {
         const gl = this.gl;
-
+        if (!this.cube || !this.floor || !this.objectShader || !this.shadowShader) return;
 
         gl.clearColor(0.94, 0.94, 0.94, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        // TODO: 오브젝트 드로우콜
-        // TODO: 그림자 드로우콜
+        const { view, projection } = this._getCameraMatrices();
+        const cubeModel = this._getCubeModelMatrix();
+        const floorModel = mat4.create();
+        mat4.translate(floorModel, floorModel, [0.0, this.floorY, 0.0]);
+
+        // 1) 바닥을 먼저 그림
+        this._drawLitObject(this.floor, floorModel, view, projection);
+
+        // 2) 바닥 위에 cube가 만드는 평면 그림자를 그림
+        const shadowModel = this._getShadowModelMatrix(cubeModel);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+        gl.depthMask(false);
+        this._drawShadowObject(this.cube, shadowModel, view, projection);
+        gl.depthMask(true);
+        gl.disable(gl.BLEND);
+
+        // 3) 실제 cube object를 그림
+        this._drawLitObject(this.cube, cubeModel, view, projection);
+
+        // 4) 광원 위치 표시용 작은 cube를 그림
+        const lampModel = mat4.create();
+        mat4.translate(lampModel, lampModel, this.lightPosition);
+        mat4.scale(lampModel, lampModel, [0.14, 0.14, 0.14]);
+        this._drawLamp(lampModel, view, projection);
+    }
+
+    _initGLState() {
+        const gl = this.gl;
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+    }
+
+    async _initSceneResources() {
+        const gl = this.gl;
+        const cubeModulePath = '/assets/stage1/cube.js';
+        const planeModulePath = '/assets/common/circularPlane.js';
+        const [{ Cube }, { CircularPlane }] = await Promise.all([
+            import(/* @vite-ignore */ cubeModulePath),
+            import(/* @vite-ignore */ planeModulePath),
+        ]);
+
+        this.cube = new Cube(gl);
+        this.floor = new CircularPlane(gl, {
+            radius: 4.2,
+            segments: 128,
+            color: [0.72, 0.72, 0.66, 1.0],
+        });
+
+        this.objectShader = new SimpleShader(gl, shVertSource, shFragSource);
+        this.lampShader = new SimpleShader(gl, shLampVertSource, shLampFragSource);
+        this.shadowShader = new SimpleShader(gl, shadowVertSource, shadowFragSource);
+        this.whiteTexture = this._createSingleColorTexture([255, 255, 255, 255]);
+    }
+
+    _deleteSceneResources() {
+        this.cube?.delete?.();
+        this.floor?.delete?.();
+        this.objectShader?.delete?.();
+        this.lampShader?.delete?.();
+        this.shadowShader?.delete?.();
+
+        if (this.whiteTexture) this.gl.deleteTexture(this.whiteTexture);
+
+        this.cube = null;
+        this.floor = null;
+        this.objectShader = null;
+        this.lampShader = null;
+        this.shadowShader = null;
+        this.whiteTexture = null;
+    }
+
+    _createSingleColorTexture(rgba) {
+        const gl = this.gl;
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            1,
+            1,
+            0,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            new Uint8Array(rgba)
+        );
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        return texture;
+    }
+
+    _getCameraMatrices() {
+        const gl = this.gl;
+        const aspect = gl.canvas.width / Math.max(gl.canvas.height, 1);
+        const view = mat4.create();
+        const projection = mat4.create();
+
+        mat4.lookAt(
+            view,
+            this.viewPosition,
+            vec3.fromValues(0.0, -0.15, 0.0),
+            vec3.fromValues(0.0, 1.0, 0.0)
+        );
+        mat4.perspective(projection, Math.PI / 4.0, aspect, 0.1, 100.0);
+
+        return { view, projection };
+    }
+
+    _getCubeModelMatrix() {
+        const model = mat4.create();
+        const rotation = this.arcball.getModelRotMatrix();
+
+        mat4.translate(model, model, [0.0, -0.25, 0.0]);
+        mat4.multiply(model, model, rotation);
+        mat4.scale(model, model, [1.45, 1.45, 1.45]);
+
+        return model;
+    }
+
+    _getShadowModelMatrix(objectModel) {
+        const shadowProjection = this._createPlaneShadowMatrix(
+            [0.0, 1.0, 0.0, -this.floorY],
+            [this.lightPosition[0], this.lightPosition[1], this.lightPosition[2], 1.0]
+        );
+        const bias = mat4.create();
+        const shadowModel = mat4.create();
+
+        // z-fighting 방지를 위해 바닥보다 아주 조금 위로 올림
+        mat4.translate(bias, bias, [0.0, 0.004, 0.0]);
+        mat4.multiply(shadowModel, bias, shadowProjection);
+        mat4.multiply(shadowModel, shadowModel, objectModel);
+
+        return shadowModel;
+    }
+
+    _createPlaneShadowMatrix(plane, light) {
+        const dot = plane[0] * light[0] + plane[1] * light[1] + plane[2] * light[2] + plane[3] * light[3];
+        const matrix = mat4.create();
+
+        // column-major layout for gl-matrix
+        for (let col = 0; col < 4; col++) {
+            for (let row = 0; row < 4; row++) {
+                matrix[col * 4 + row] = dot * (row === col ? 1.0 : 0.0) - light[row] * plane[col];
+            }
+        }
+
+        return matrix;
+    }
+
+    _drawLitObject(object, model, view, projection) {
+        const gl = this.gl;
+        const shader = this.objectShader;
+        const normalMatrix = mat3.create();
+
+        mat3.normalFromMat4(normalMatrix, model);
+
+        shader.use();
+        shader.setMat4('u_model', model);
+        shader.setMat4('u_view', view);
+        shader.setMat4('u_projection', projection);
+        shader.setVec3('u_viewPos', this.viewPosition);
+        shader.setVec3('light.position', this.lightPosition);
+        shader.setVec3('light.ambient', [0.35, 0.35, 0.35]);
+        shader.setVec3('light.diffuse', [0.82, 0.82, 0.82]);
+        shader.setVec3('light.specular', [0.35, 0.35, 0.35]);
+        shader.setVec3('light.direction', vec3.fromValues(-this.lightPosition[0], -this.lightPosition[1], -this.lightPosition[2]));
+        shader.setFloat('light.cutOff', Math.PI / 5.0);
+        shader.setFloat('light.outerCutOff', Math.PI / 4.0);
+        shader.setFloat('light.constant', 1.0);
+        shader.setFloat('light.linear', 0.045);
+        shader.setFloat('light.quadratic', 0.0075);
+        shader.setVec3('material.specular', [0.2, 0.2, 0.2]);
+        shader.setFloat('material.shininess', 32.0);
+        shader.setInt('material.diffuse', 0);
+
+        // shVert.glsl이 내부에서 normal matrix를 계산하므로 현재 normalMatrix는 향후 shader 교체용으로만 유지
+        void normalMatrix;
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.whiteTexture);
+        object.draw(shader);
+    }
+
+    _drawShadowObject(object, model, view, projection) {
+        const shader = this.shadowShader;
+        shader.use();
+        shader.setMat4('u_model', model);
+        shader.setMat4('u_view', view);
+        shader.setMat4('u_projection', projection);
+        shader.setVec4('u_shadowColor', [0.0, 0.0, 0.0, 0.38]);
+        object.draw(shader);
+    }
+
+    _drawLamp(model, view, projection) {
+        const shader = this.lampShader;
+        shader.use();
+        shader.setMat4('u_model', model);
+        shader.setMat4('u_view', view);
+        shader.setMat4('u_projection', projection);
+        this.cube.draw(shader);
     }
 
     // ─── 클리어 ───────────────────────────────────────────────
