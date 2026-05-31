@@ -7,6 +7,8 @@ import StageManager from '../core/StageManager.js';
 import '../styles/GameScene.css';
 import { mat3, mat4, vec3 } from 'gl-matrix';
 
+import { ObjModel } from '../assets/stage1/objModel.js';
+import { CircularPlane, RectPlane } from '../assets/common/circularPlane.js';
 import shVertSource from '../shaders/shVert.glsl?raw';
 import shFragSource from '../shaders/shFrag.glsl?raw';
 import shLampVertSource from '../shaders/shLampVert.glsl?raw';
@@ -105,9 +107,9 @@ export default class GameScene extends BaseScene {
         this._onKeyDown = this._onKeyDown.bind(this);
         this.arcball = new Arcball(this.gl.canvas, 5.0, { rotation: 1.2, zoom: 0.0 });
 
-        this.floorY = -1.1;
-        this.lightPosition = vec3.fromValues(2.8, 4.2, 2.4);
-        this.viewPosition = vec3.fromValues(0.0, 2.4, 6.5);
+        this.wallX = -5.0;          // 왼쪽 벽의 X 위치
+        this.lightPosition = vec3.fromValues(6.0, 3.0, 4.0);   // 오브젝트 오른쪽 앞에서 비춤
+        this.viewPosition  = vec3.fromValues(1.5, 3, 4.5);   // 벽과 오브젝트를 함께 볼 수 있는 위치
     }
 
     async enter() {
@@ -153,25 +155,41 @@ export default class GameScene extends BaseScene {
 
     render() {
         const gl = this.gl;
-        if (!this.cube || !this.floor || !this.objectShader || !this.shadowShader) return;
+        if (!this.cube || !this.wall || !this.objectShader || !this.shadowShader) return;
 
         gl.clearColor(0.94, 0.94, 0.94, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
 
         const { view, projection } = this._getCameraMatrices();
         const cubeModel = this._getCubeModelMatrix();
-        const floorModel = mat4.create();
-        mat4.translate(floorModel, floorModel, [0.0, this.floorY, 0.0]);
 
-        // 1) 바닥을 먼저 그림
-        this._drawLitObject(this.floor, floorModel, view, projection);
+        // 벽은 YZ 평면에 놓인 직사각형: X = wallX 위치에 수직으로 세움
+        // RectPlane은 XZ 평면(법선 +Y) → rotateZ(-90°)하면 법선이 +X를 향함
+        const wallModel = mat4.create();
+        mat4.translate(wallModel, wallModel, [this.wallX, 0.0, 0.0]);
+        mat4.rotateZ(wallModel, wallModel, -Math.PI / 2.0);
 
-        // 2) 바닥 위에 cube가 만드는 평면 그림자를 그림
+        // 1) 벽을 먼저 그림
+        this._drawLitObject(this.wall, wallModel, view, projection, this.wallTexture);
+
+        // 2) 벽에 cube가 만드는 평면 그림자를 그림 (수직 평면 X = wallX)
+        //    평면 방정식: x = wallX  →  (1, 0, 0, -wallX)
         const shadowModel = this._getShadowModelMatrix(cubeModel);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.depthMask(false);
+
+        // 스텐실: 처음 그려지는 픽셀만 1로 마킹하고 통과
+        gl.stencilFunc(gl.NOTEQUAL, 1, 0xff);
+        gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
+        gl.stencilMask(0xff);
+
         this._drawShadowObject(this.cube, shadowModel, view, projection);
+
+        // 스텐실 상태 복구
+        gl.stencilMask(0x00);
+        gl.stencilFunc(gl.ALWAYS, 0, 0xff);
+
         gl.depthMask(true);
         gl.disable(gl.BLEND);
 
@@ -191,45 +209,45 @@ export default class GameScene extends BaseScene {
         gl.depthFunc(gl.LEQUAL);
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
+        gl.enable(gl.STENCIL_TEST);
     }
 
     async _initSceneResources() {
         const gl = this.gl;
-        const cubeModulePath = '/assets/stage1/cube.js';
-        const planeModulePath = '/assets/common/circularPlane.js';
-        const [{ Cube }, { CircularPlane }] = await Promise.all([
-            import(/* @vite-ignore */ cubeModulePath),
-            import(/* @vite-ignore */ planeModulePath),
-        ]);
 
-        this.cube = new Cube(gl);
-        this.floor = new CircularPlane(gl, {
-            radius: 4.2,
-            segments: 128,
-            color: [0.72, 0.72, 0.66, 1.0],
+        this.cube = await ObjModel.load(gl, `./assets/stage1/1.obj`);
+
+        // 벽: YZ 평면에 놓인 직사각형 (rotateY로 세움)
+        this.wall = new RectPlane(gl, {
+            halfW: 8.0,
+            halfH: 7.0,
+            color: [0.88, 0.84, 0.78, 1.0],
         });
 
         this.objectShader = new SimpleShader(gl, shVertSource, shFragSource);
-        this.lampShader = new SimpleShader(gl, shLampVertSource, shLampFragSource);
+        this.lampShader   = new SimpleShader(gl, shLampVertSource, shLampFragSource);
         this.shadowShader = new SimpleShader(gl, shadowVertSource, shadowFragSource);
         this.whiteTexture = this._createSingleColorTexture([255, 255, 255, 255]);
+        this.wallTexture  = this._createSingleColorTexture([224, 215, 200, 255]);
     }
 
     _deleteSceneResources() {
         this.cube?.delete?.();
-        this.floor?.delete?.();
+        this.wall?.delete?.();
         this.objectShader?.delete?.();
         this.lampShader?.delete?.();
         this.shadowShader?.delete?.();
 
         if (this.whiteTexture) this.gl.deleteTexture(this.whiteTexture);
+        if (this.wallTexture)  this.gl.deleteTexture(this.wallTexture);
 
         this.cube = null;
-        this.floor = null;
+        this.wall = null;
         this.objectShader = null;
         this.lampShader = null;
         this.shadowShader = null;
         this.whiteTexture = null;
+        this.wallTexture = null;
     }
 
     _createSingleColorTexture(rgba) {
@@ -264,7 +282,7 @@ export default class GameScene extends BaseScene {
         mat4.lookAt(
             view,
             this.viewPosition,
-            vec3.fromValues(0.0, -0.15, 0.0),
+            vec3.fromValues(-1.0, 0.5, 0.0),  // 오브젝트와 왼쪽 벽 사이를 바라봄
             vec3.fromValues(0.0, 1.0, 0.0)
         );
         mat4.perspective(projection, Math.PI / 4.0, aspect, 0.1, 100.0);
@@ -276,7 +294,7 @@ export default class GameScene extends BaseScene {
         const model = mat4.create();
         const rotation = this.arcball.getModelRotMatrix();
 
-        mat4.translate(model, model, [0.0, -0.25, 0.0]);
+        mat4.translate(model, model, [0.0, 0.55, 0.0]);
         mat4.multiply(model, model, rotation);
         mat4.scale(model, model, [1.45, 1.45, 1.45]);
 
@@ -284,15 +302,17 @@ export default class GameScene extends BaseScene {
     }
 
     _getShadowModelMatrix(objectModel) {
+        // 수직 벽 평면: x = wallX  →  법선(1,0,0), d = -wallX
+        // 평면 방정식: 1*x + 0*y + 0*z + (-wallX) = 0
         const shadowProjection = this._createPlaneShadowMatrix(
-            [0.0, 1.0, 0.0, -this.floorY],
+            [1.0, 0.0, 0.0, -this.wallX],
             [this.lightPosition[0], this.lightPosition[1], this.lightPosition[2], 1.0]
         );
         const bias = mat4.create();
         const shadowModel = mat4.create();
 
-        // z-fighting 방지를 위해 바닥보다 아주 조금 위로 올림
-        mat4.translate(bias, bias, [0.0, 0.004, 0.0]);
+        // z-fighting 방지: 벽에서 살짝 앞으로 (X축 양의 방향)
+        mat4.translate(bias, bias, [0.004, 0.0, 0.0]);
         mat4.multiply(shadowModel, bias, shadowProjection);
         mat4.multiply(shadowModel, shadowModel, objectModel);
 
