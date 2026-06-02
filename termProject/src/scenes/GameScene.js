@@ -13,6 +13,7 @@ import shLampVertSource from '../shaders/shLampVert.glsl?raw';
 import shLampFragSource from '../shaders/shLampFrag.glsl?raw';
 import shadowVertSource from '../shaders/shadowVert.glsl?raw';
 import shadowFragSource from '../shaders/shadowFrag.glsl?raw';
+import ShadowMatcher from '../game/ShadowMatcher.js';
 
 class SimpleShader {
     constructor(gl, vertexSource, fragmentSource) {
@@ -127,6 +128,8 @@ export default class GameScene extends BaseScene {
         this.stageName = stage ? stage.name : `Stage ${this.stageId + 1}`;
         this.assetsPath = stage ? stage.assetsPath : null;
         this.targetShadowImage = stage ? stage.targetShadow : null;
+        // 06-03 feat: get answer angle
+        this.targetRotation = stage.targetRotation;
 
         this._initGLState();
         await this._initSceneResources();
@@ -141,12 +144,20 @@ export default class GameScene extends BaseScene {
         this._deleteSceneResources();
     }
 
+    // feat: level clear check
     update(deltaTime) {
         this.timer += deltaTime;
+
+        const result = ShadowMatcher.checkClear(
+            this.arcball.getRotationQuaternion(),
+            this.targetRotation
+        );
+
+        this.matchRate = result.matchPercentage / 100.0;
+
         this._updateHUD();
 
-        // this.matchRate = ShadowMatcher.check();
-        if (this.matchRate >= 0.95) {
+        if (result.cleared) {
             this._stageClear(this.stageId);
         }
     }

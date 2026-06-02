@@ -144,4 +144,9 @@ export default class Arcball {
         this.position = vec3.fromValues(0, 0, this.distance);
         this.target = vec3.fromValues(0, 0, 0);
     }
+
+    // 정답 확인용 데이터 받는 함수
+    getRotationQuaternion() {
+    return [...this.rotation];
+    }
 }
