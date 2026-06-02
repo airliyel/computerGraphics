@@ -133,6 +133,13 @@ export default class GameScene extends BaseScene {
         this._initGLState();
         await this._initSceneResources();
 
+        this.arcball.rotation = [
+            -0.3187977075576782,
+            0.3579593300819397,
+            -0.07943620532751083,
+            0.8740318417549133
+        ];
+
         this._buildUI();
         window.addEventListener('keydown', this._onKeyDown);
     }
@@ -515,5 +522,8 @@ export default class GameScene extends BaseScene {
     _onKeyDown(e) {
         if (e.key === 'h')      this._useHint();
         if (e.key === 'Escape') this._goToStageSelect();
+        if (e.key === 'p') {
+        console.log('Current Rotation:', this.arcball.rotation);
+        }
     }
 }
