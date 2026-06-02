@@ -284,4 +284,4 @@ export class Cube {
         gl.deleteBuffer(this.ebo);
         gl.deleteVertexArray(this.vao);
     }
-} 
+}

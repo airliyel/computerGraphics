@@ -14,7 +14,7 @@ export default class App {
         await StageManager.load();
 
         this.canvas = document.getElementById('gameCanvas');
-        this.gl = this.canvas.getContext('webgl2');
+        this.gl = this.canvas.getContext('webgl2', { stencil: true });
 
         if (!this.gl) {
             alert('WebGL2 not supported');
