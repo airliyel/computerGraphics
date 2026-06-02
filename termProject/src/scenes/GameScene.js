@@ -7,7 +7,7 @@ import StageManager from '../core/StageManager.js';
 import '../styles/GameScene.css';
 import { mat3, mat4, vec3 } from 'gl-matrix';
 
-import { ObjModel } from '../assets/stage1/objModel.js';
+import { ObjModel } from '../assets/objModel.js';
 import { CircularPlane, RectPlane } from '../assets/common/circularPlane.js';
 import shVertSource from '../shaders/shVert.glsl?raw';
 import shFragSource from '../shaders/shFrag.glsl?raw';
@@ -132,13 +132,6 @@ export default class GameScene extends BaseScene {
 
         this._initGLState();
         await this._initSceneResources();
-
-        this.arcball.rotation = [
-            -0.3187977075576782,
-            0.3579593300819397,
-            -0.07943620532751083,
-            0.8740318417549133
-        ];
 
         this._buildUI();
         window.addEventListener('keydown', this._onKeyDown);
