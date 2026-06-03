@@ -7,7 +7,7 @@ import StageManager from '../core/StageManager.js';
 import '../styles/GameScene.css';
 import { mat3, mat4, vec3 } from 'gl-matrix';
 
-import { ObjModel } from '../assets/stage1/objModel.js';
+import { ObjModel } from '../assets/objModel.js';
 import { CircularPlane, RectPlane } from '../assets/common/circularPlane.js';
 import shVertSource from '../shaders/shVert.glsl?raw';
 import shFragSource from '../shaders/shFrag.glsl?raw';
@@ -526,5 +526,8 @@ export default class GameScene extends BaseScene {
     _onKeyDown(e) {
         if (e.key === 'h')      this._useHint();
         if (e.key === 'Escape') this._goToStageSelect();
+        if (e.key === 'p') {
+        console.log('Current Rotation:', this.arcball.rotation);
+        }
     }
 }

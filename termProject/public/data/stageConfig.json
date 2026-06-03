@@ -1,19 +1,17 @@
 [
     {
-    "id": 0,
-    "name": "stage name",
-    "locked": false,
-    "threestartime": 60,
-    "highscore": 0,
-    "assetsPath": "",
-    "targetShadowImage": "",
-
-    "targetRotation": [
-        0.0,
-        0.70710678,
-        0.0,
-        0.70710678
-    ]
+        "id": 0,
+        "name": "stage name",
+        "locked": false,
+        "threestartime": 60,
+        "highscore": 0,
+        "modelPath" : "./assets/stage1/1.obj",
+        "targetShadowCoordinates" : [
+            -0.009308806620538235,
+            -0.5998876094818115,
+            -0.6424452066421509,
+            0.4767704904079437
+        ]
     },
     {
         "id": 1,
@@ -21,14 +19,13 @@
         "locked": true,
         "threestartime": 90,
         "highscore": 0,
-        "assetsPath" : "",
-        "targetShadowImage" : "",
-        "targetRotation": [
-        0.0,
-        0.70710678,
-        0.0,
-        0.70710678
-    ]
+        "modelPath" : "./assets/stage2/2.obj",
+        "targetShadowCoordinates" : [
+            0.05239640171973308,
+            0.4838566849285527,
+            0.41672408401537386,
+            0.7677760030289206
+        ]
     },
     {
         "id": 2,
@@ -36,13 +33,54 @@
         "locked": true,
         "threestartime": 120,
         "highscore": 0,
-        "assetsPath" : "",
-        "targetShadowImage" : "",
-        "targetRotation": [
-        0.0,
-        0.70710678,
-        0.0,
-        0.70710678
-    ]
+        "modelPath" : "./assets/stage3/elephant.obj",
+        "targetShadowCoordinates" : [
+            -0.7965131619369841,
+            0.4957124858995977,
+            -0.31188826303247613,
+            0.15021225063303426
+        ]
+    },
+    {
+        "id": 3,
+        "name": "stage name",
+        "locked": true,
+        "threestartime": 120,
+        "highscore": 0,
+        "modelPath" : "./assets/stage4/GlobeSphere.obj",
+        "targetShadowCoordinates" : [
+            0.09307533502578735,
+            -0.32783350348472595,
+            -0.5897679328918457,
+            0.7321404814720154
+        ]
+    },
+    {
+        "id": 4,
+        "name": "stage name",
+        "locked": true,
+        "threestartime": 120,
+        "highscore": 0,
+        "modelPath" : "./assets/stage5/logo-2.obj",
+        "targetShadowCoordinates" : [
+            0.1732747832971504,
+            -0.442200959639328,
+            0.008220223025840715,
+            -0.879978542202998
+        ]
+    },
+    {
+        "id": 5,
+        "name": "stage name",
+        "locked": true,
+        "threestartime": 120,
+        "highscore": 0,
+        "modelPath" : "./assets/stage6/logo-4.obj",
+        "targetShadowCoordinates" : [
+            -0.1802097057688702,
+            -0.6439810722828562,
+            -0.49313211189775336,
+            0.5564541883551011
+        ]
     }
 ]
