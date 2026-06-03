@@ -1,53 +1,73 @@
+/* ─── Design Tokens ─────────────────────────────────────────────── */
+:root {
+    --c-bg:               #201f1f;
+    --c-surface:          #514d47;
+    --c-surface-2:        #373531;
+    --c-text:             #ffdca1;
+    --c-primary:          #ffba20;
+    --c-primary-hover:    #ffd984;
+    --c-primary-shadow:   #bd6500;
+    --c-accent:           #00d7fe;
+    --c-text-on-primary:  #201f1f;
+    --c-muted:            rgba(255,220,161,0.45);
+
+    --font:               'Instrument Sans', system-ui, sans-serif;
+
+    --radius-btn:  10px;
+    --radius-card: 15px;
+    --radius-pill: 99px;
+
+    --shadow-btn-primary:   0 4px 0 var(--c-primary-shadow);
+    --shadow-btn-secondary: 0 4px 0 var(--c-text);
+    --glow-primary:   0 0 15px var(--c-text);
+    --glow-secondary: 0 0 7.5px var(--c-text);
+}
+
+/* ─── Global Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
     margin: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
+    background: var(--c-bg);
+    font-family: var(--font);
 }
 
+/* ─── WebGL Canvas ──────────────────────────────────────────────── */
 #gameCanvas {
-    position: fixed;      /* ← fixed로 변경해서 레이어 기준 명확히 */
-    top: 0;
-    left: 0;
+    position: fixed;
+    inset: 0;
     width: 100vw;
     height: 100vh;
     display: block;
-    background: black;
-    z-index: 0;           /* ← canvas는 맨 아래 */
+    background: var(--c-bg);
+    z-index: 0;
 }
 
-/* ─── UI 공통 레이어 ─────────────────────────── */
-/* 모든 씬 UI div가 canvas 위에 올라오도록 */
+/* ─── Scene Layer Base ──────────────────────────────────────────── */
 #main-menu,
 #stage-select,
-#clear-scene {
+#game-hud {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10;          /* ← canvas(0)보다 위 */
-    display: flex;
-    flex-direction: column;
+    inset: 0;
+    z-index: 10;
+}
+
+/* ─── Global Button Reset ───────────────────────────────────────── */
+button {
+    all: unset;
+    cursor: pointer;
+    font-family: var(--font);
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-family: sans-serif;
+    user-select: none;
 }
 
-/* #game-hud 레이아웃은 GameScene.css에서 단독 관리 */
-
-button {
-    margin: 8px;
-    padding: 12px 32px;
-    font-size: 16px;
-    cursor: pointer;
-    background: rgba(255, 255, 255, 0.15);
-    color: rgb(0, 0, 0);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 8px;
-}
-
-button:hover {
-    background: rgba(255, 255, 255, 0.3);
+button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
 }

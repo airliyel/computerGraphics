@@ -23,7 +23,8 @@ export default class Arcball {
         this.dragging = false;
         this.lastMouseX = 0;
         this.lastMouseY = 0;
-        
+        this.locked = false;
+
         // 마우스 이벤트 리스너 설정
         canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
         canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
@@ -52,13 +53,14 @@ export default class Arcball {
     }
 
     onMouseDown(event) {
+        if (this.locked) return;
         this.dragging = true;
         this.lastMouseX = event.clientX;
         this.lastMouseY = event.clientY;
     }
 
     onMouseMove(event) {
-        if (!this.dragging) return;
+        if (this.locked || !this.dragging) return;
 
         const currentX = event.clientX;
         const currentY = event.clientY;
@@ -87,6 +89,7 @@ export default class Arcball {
     }
 
     onWheel(event) {
+        if (this.locked) return;
         // 줌 인/아웃에 감도 적용
         this.distance += event.deltaY * this.zoomSensitivity * this.distance;
         

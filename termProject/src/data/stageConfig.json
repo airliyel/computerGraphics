@@ -1,0 +1,86 @@
+[
+    {
+        "id": 0,
+        "name": "Entangled Rings",
+        "locked": false,
+        "threestartime": 60,
+        "highscore": 0,
+        "modelPath" : "./assets/stage1/1.obj",
+        "targetRotation" : [
+            -0.849837601184845,
+            0.514435887336731,
+            -0.10507441312074661,
+            -0.0457659550011158
+        ]
+    },
+    {
+        "id": 1,
+        "name": "Steaming Pot",
+        "locked": true,
+        "threestartime": 60,
+        "highscore": 0,
+        "modelPath" : "./assets/stage2/2.obj",
+        "targetRotation" : [
+            -0.2058609575033188,
+            0.584302544593811,
+            -0.28841763734817505,
+            0.7300848364830017
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Elephant",
+        "locked": true,
+        "threestartime": 60,
+        "highscore": 0,
+        "modelPath" : "./assets/stage3/elephant.obj",
+        "targetRotation" : [
+            0.4465506970882416,
+            -0.3039621114730835,
+            0.6260358095169067,
+            0.5623888373374939
+        ]
+    },
+    {
+        "id": 3,
+        "name": "Orbit",
+        "locked": true,
+        "threestartime": 30,
+        "highscore": 0,
+        "modelPath" : "./assets/stage4/GlobeSphere.obj",
+        "targetRotation" : [
+            0.2292313277721405,
+            0.1008806899189949,
+            -0.5132355690002441,
+            0.8208932876586914
+        ]
+    },
+    {
+        "id": 4,
+        "name": "Serpent",
+        "locked": true,
+        "threestartime": 60,
+        "highscore": 0,
+        "modelPath" : "./assets/stage5/logo-2.obj",
+        "targetRotation" : [
+            -0.7148496508598328,
+            0.13857387006282806,
+            0.6595051288604736,
+            -0.18664030730724335
+        ]
+    },
+    {
+        "id": 5,
+        "name": "Sixth Sense",
+        "locked": true,
+        "threestartime": 60,
+        "highscore": 0,
+        "modelPath" : "./assets/stage6/logo-4.obj",
+        "targetRotation" : [
+            -0.4800296127796173,
+            -0.5572600364685059,
+            -0.3961862027645111,
+            0.5496070384979248
+        ]
+    }
+]

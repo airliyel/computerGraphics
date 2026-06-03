@@ -1,22 +1,13 @@
-async function loadStageConfig() {
-    try {
-        const response = await fetch(`${import.meta.env.BASE_URL}data/stageConfig.json`);
-        const stageData = await response.json();
-        return stageData;
-    } catch (error) {
-        console.error('Error loading stage config:', error);
-        return [];
-    }
-}
+import stages from '../data/stageConfig.json';
+import MODEL_URLS from '../assets/models.js';
 
 const StageManager = {
 
     /** @type {Array} 로드된 전체 스테이지 배열 */
-    _stages: [],
+    _stages: stages.map(s => ({ ...s, modelPath: MODEL_URLS[s.id] })),
 
-    async load() {
-        this._stages = await loadStageConfig();
-    },
+    // App.initialize() 에서 await StageManager.load() 호출을 유지하기 위한 no-op
+    async load() {},
 
     getAll() {
         return this._stages;

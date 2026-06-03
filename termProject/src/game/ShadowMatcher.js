@@ -1,6 +1,6 @@
 // src/game/ShadowMatcher.js
 
-const DEFAULT_THRESHOLD = 95;
+const DEFAULT_THRESHOLD = 98;
 
 function normalizeQuaternion(q) {
     const len = Math.hypot(q[0], q[1], q[2], q[3]);

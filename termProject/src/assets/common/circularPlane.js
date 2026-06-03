@@ -141,7 +141,7 @@ export class RectPlane {
         const normals    = new Float32Array([ 0,1, 0,  0,1, 0,  0,1,0,   0,1,0]);
         const colors     = new Float32Array([...c,...c,...c,...c]);
         const texCoords  = new Float32Array([0,0, 1,0, 1,1, 0,1]);
-        const indices    = new Uint16Array([0,1,2, 0,2,3]);
+        const indices    = new Uint16Array([0,2,1, 0,3,2]);
 
         this.vertices  = positions;
         this.normals   = normals;

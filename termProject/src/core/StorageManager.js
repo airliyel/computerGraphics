@@ -83,7 +83,7 @@ const StorageManager = {
         // localStorage에서 shadowMatch_save 키를 삭제합니다. 
         // 메인 화면에서 New Start 버튼에 연결할 함수입니다. 
         // 확인 다이얼로그는 UI 쪽에서 처리하면 되고 이 함수는 삭제만 하면 됩니다.
-        window.localstorage.removeItem(STORAGE_KEY);
+        window.localStorage.removeItem(STORAGE_KEY);
     },
 };
 
