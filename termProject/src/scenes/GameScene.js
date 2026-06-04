@@ -177,12 +177,13 @@ export default class GameScene extends BaseScene {
         }
 
         // ── 게임 플레이 (인트로 종료 후) ──
-        this.timer += deltaTime;
-
         const result = ShadowMatcher.checkClear(
             this.arcball.getRotationQuaternion(),
             this.targetRotation
         );
+
+	if (!result.cleared)
+            this.timer += deltaTime;
 
         this.matchRate = result.matchPercentage / 100.0;
 
