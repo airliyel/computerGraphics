@@ -754,7 +754,7 @@ export default class GameScene extends BaseScene {
         if (pctEl) pctEl.textContent = `${pct}%`;
 
         // 1~4단계: 구간별 점등 / 5단계: 클리어 조건 달성 시에만 점등
-        const activeSteps = this._clearTriggered ? 5 : pct >= 60 ? 4 : pct >= 40 ? 3 : pct >= 20 ? 2 : 1;
+        const activeSteps = this._clearTriggered ? 5 : pct >= 80 ? 4 : pct >= 60 ? 3 : pct >= 30 ? 2 : 1;
         document.querySelectorAll('.match-dot').forEach((dot, i) => {
             dot.classList.toggle('active', i < activeSteps);
         });
